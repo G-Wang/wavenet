@@ -37,7 +37,8 @@ from torch.utils.data.distributed import DistributedSampler
 
 from torch.utils.data import DataLoader
 from wavenet import WaveNet
-from mel2samp_onehot import Mel2SampOnehot
+#from mel2samp_onehot import Mel2SampOnehot
+from gary_sampler import DeepMels
 from utils import to_gpu
 
 class CrossEntropyLoss(torch.nn.Module):
@@ -106,7 +107,8 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
                                                       optimizer)
         iteration += 1  # next iteration is iteration + 1
 
-    trainset = Mel2SampOnehot(**data_config)
+    #trainset = Mel2SampOnehot(**data_config)
+    trainset = DeepMels(**data_config)
     # =====START: ADDED FOR DISTRIBUTED======
     train_sampler = DistributedSampler(trainset) if num_gpus > 1 else None
     # =====END:   ADDED FOR DISTRIBUTED======
