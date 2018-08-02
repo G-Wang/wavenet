@@ -56,3 +56,44 @@ class DeepMels(torch.utils.data.Dataset):
     
     def __len__(self):
         return len(self.audio_files)
+
+
+if __name__ == "__main__":
+    """
+    Turns audio files into mel-spectrogram representations for inference
+
+    Uses the data portion of the config for audio processing parameters, 
+    but ignores training files and segment lengths.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', "--audio_list", required=True, type=str,
+                        help='File containing list of wavefiles')
+    parser.add_argument('-o', "--output_dir", required=True, type=str,
+                        help='Directory to put Mel-Spectrogram Tensors')
+    parser.add_argument('-c', '--config', type=str,
+                        help='JSON file for configuration')
+    
+    args = parser.parse_args()
+
+    filepaths = utils.files_to_list(args.audio_list)
+    
+    # Make directory if it doesn't exist
+    if not os.path.isdir(args.output_dir):
+        os.makedirs(args.output_dir)
+        os.chmod(args.output_dir, 0o775)
+    
+    # Parse config.  Only using data processing
+    with open(args.config) as f:
+        data = f.read()
+    config = json.loads(data)
+    data_config = config["data_config"]
+    mel_factory = Mel2SampOnehot(**data_config)  
+    
+    for filepath in filepaths:
+        audio, sampling_rate = utils.load_wav_to_torch(filepath)
+        assert(sampling_rate == mel_factory.sampling_rate)
+        melspectrogram = mel_factory.get_mel(audio)
+        filename = os.path.basename(filepath)
+        new_filepath = args.output_dir + '/' + filename + '.pt'
+        print(new_filepath)
+        torch.save(melspectrogram, new_filepath)

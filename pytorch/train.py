@@ -129,6 +129,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
     epoch_offset = max(0, int(iteration / len(train_loader)))
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, epochs):
+        total_loss = 0
         print("Epoch: {}".format(epoch))
         for i, batch in enumerate(train_loader):
             model.zero_grad()
@@ -146,7 +147,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
             loss.backward()
             optimizer.step()
 
-            print("{}:\t{:.9f}".format(iteration, reduced_loss))
+            total_loss += reduced_loss
 
             if (iteration % iters_per_checkpoint == 0):
                 if rank == 0:
@@ -156,6 +157,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
                                     checkpoint_path)
                      
             iteration += 1
+        print("epoch:{}, total epoch loss:{}".format(epoch, total_loss))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
